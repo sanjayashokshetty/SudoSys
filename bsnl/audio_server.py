@@ -19,22 +19,21 @@ stream = p.open(format=p.get_format_from_width(WIDTH),
                 output=True,
                 frames_per_buffer=CHUNK)
 
-
-HOST = ''                 # Symbolic name meaning all available interfaces
-PORT = 50007              # Arbitrary non-privileged port
+HOST = ''  # Symbolic name meaning all available interfaces
+PORT = 50007  # Arbitrary non-privileged port
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((HOST, PORT))
 s.listen(1)
 conn, addr = s.accept()
-print 'Connected by', addr
-data = conn.recv(1024)
+print('Connected by', addr)
+data = conn.recv(10)
 
-i=1
+i = 1
 while data != '':
-    stream.write(data)
-    data = conn.recv(1024)
-    i=i+1
-    print i
+    stream.write(data, len(data))
+    data = conn.recv(10)
+    i = i + 1
+    print(i)
     frames.append(data)
 
 wf = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
