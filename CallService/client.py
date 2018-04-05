@@ -10,6 +10,7 @@ incoming_call_thread, outgoing_call_thread = None, None
 expecting_call_back_from = None
 run = True
 recv_sock = None
+ans = None
 
 
 def msg_routine():
@@ -58,7 +59,7 @@ def ipr(ip):
 
 
 def listen_call():
-    global expecting_call_back_from, outgoing_call_thread, run, recv_sock
+    global expecting_call_back_from, outgoing_call_thread, run, recv_sock, ans
     recv_sock = socket.socket()
     recv_sock.bind(('', incoming_call_port))
     recv_sock.listen(1)
@@ -68,13 +69,17 @@ def listen_call():
             conn, address = recv_sock.accept()
             if not run:
                 break
-            username = unr(address[0])
+            username = ipr(address[0])
+
             if expecting_call_back_from is not None and expecting_call_back_from != username:
                 conn.close()
                 continue
             if expecting_call_back_from is None:
-                print(username + "is calling u")
-                if input('Accept? (y/n): ') == 'y':
+                print(username + ' is calling you! Accept?(y/n): ')
+                ans = None
+                while run and ans is None:
+                    sleep(.1)
+                if ans == 'y':
                     outgoing_call_thread = threading.Thread(target=call, kwargs={'username': username})
                     outgoing_call_thread.start()
                 else:
@@ -109,7 +114,7 @@ def call(username):
 
 
 def main(username, password):
-    global run
+    global run, ans
     msg_sock = socket.socket()
     msg_sock.connect((server_ip, server_port))
     if auth(msg_sock, username, password):
@@ -134,6 +139,8 @@ def main(username, password):
                 print(ipr(y[1]))
             elif y[0] == 'unr':
                 print(unr(y[1]))
+            elif y[0] == 'y' or y[0] == 'n':
+                ans = y[0]
     except KeyboardInterrupt:
         pass
     call_thread.join()
