@@ -3,6 +3,8 @@ import socket
 import threading
 from time import sleep
 
+import pyaudio
+
 incoming_call_port = 8000
 server_port = 8001
 server_ip = '10.50.18.161'
@@ -12,11 +14,19 @@ run = True
 recv_sock = None
 ans = None
 
+FORMAT = pyaudio.paInt16
+CHANNELS = 1
+RATE = 16000
+CHUNK = 1000
 
-def msg_routine():
-    pass
+audio = pyaudio.PyAudio()
 
-
+mic = audio.open(format=FORMAT, channels=CHANNELS,
+                 rate=RATE, input=True,
+                 frames_per_buffer=CHUNK)
+speaker = audio.open(format=FORMAT, channels=CHANNELS,
+                     rate=RATE, output=True,
+                     frames_per_buffer=CHUNK)
 buffer = b''
 
 
@@ -93,8 +103,9 @@ def listen_call():
                 else:
                     conn.close()
                     continue
-            for _ in range(10):
-                print(read_sock(conn))
+            for _ in range(1000):
+                frame = conn.recv(CHUNK)
+                speaker.write(frame, len(frame))
             conn.close()
     except KeyboardInterrupt:
         if conn is not None:
@@ -112,9 +123,8 @@ def call(username):
     try:
         call_sock = socket.socket()
         call_sock.connect((ip, incoming_call_port))
-        for _ in range(10):
-            call_sock.send(b'Hello\n')
-            sleep(2)
+        for _ in range(1000):
+            call_sock.send(mic.read(CHUNK) + b'\n')
         call_sock.close()
     except:
         pass
