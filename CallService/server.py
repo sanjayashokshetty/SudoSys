@@ -2,6 +2,7 @@ import socket
 
 username_password_db = {'srinag': 'password', 'shreyas': 'password', 'skitty': 'password'}
 username_resolver = {}
+ip_resolver = {}
 username_conn = {}
 server_port = 8001
 
@@ -35,6 +36,7 @@ def main():
             if x[0] == 'auth':
                 if auth(x[1], x[2]):
                     username_resolver[x[1]] = address[0]
+                    ip_resolver[address[0]] = x[1]
                     conn.send(b'pass\n')
                 else:
                     conn.send(b'fail\n')
@@ -45,6 +47,13 @@ def main():
                 else:
                     ip = '-1'
                 conn.send((':'.join(['unr', x[1], ip]) + '\n').encode('ascii'))
+            elif x[0] == 'ipr':
+                # Check auth
+                if x[1] in ip_resolver:
+                    username = ip_resolver[x[1]]
+                else:
+                    username = '-1'
+                conn.send((':'.join(['ipr', x[1], username]) + '\n').encode('ascii'))
             conn.close()
     except KeyboardInterrupt:
         pass

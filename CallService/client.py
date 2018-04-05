@@ -1,9 +1,13 @@
 import sys
 import socket
+import threading
+from time import sleep
 
 incoming_call_port = 8000
 server_port = 8001
 server_ip = '127.0.0.1'
+incoming_call_thread, outgoing_call_thread = None, None
+expecting_call_back_from = None
 
 
 def msg_routine():
@@ -26,22 +30,79 @@ def auth(sock, username, password):
     data = read_sock(sock)
     return data == 'pass'
 
-def unr(address):
+
+def unr(username):
     sock = socket.socket()
     sock.connect((server_ip, server_port))
-    sock.send(('unr:' + address[0]+'\n').encode('ascii'))
+    sock.send(('unr:' + username + '\n').encode('ascii'))
     data = read_sock(sock)
-    usrname=data.split(':')[1]
-    return usrname
+    sock.close()
+    ip = data.split(':')[2]
+    if ip == '-1':
+        return None
+    return ip
+
+
+def ipr(ip):
+    sock = socket.socket()
+    sock.connect((server_ip, server_port))
+    sock.send(('ipr:' + ip + '\n').encode('ascii'))
+    data = read_sock(sock)
+    sock.close()
+    username = data.split(':')[2]
+    if username == '-1':
+        return None
+    return username
 
 
 def listen_call():
-    recv_sock=socket.socket()
+    global expecting_call_back_from, outgoing_call_thread
+    recv_sock = socket.socket()
     recv_sock.bind(('', incoming_call_port))
-    recv_sock.listen(5)
-    conn, address = recv_sock.accept()
-    usrname=unr(address)
-    print(usrname+"is calling u")
+    recv_sock.listen(1)
+    conn = None
+    try:
+        while True:
+            conn, address = recv_sock.accept()
+            username = unr(address[0])
+            if expecting_call_back_from is not None and expecting_call_back_from != username:
+                conn.close()
+                continue
+            if expecting_call_back_from is None:
+                print(username + "is calling u")
+                if input('Accept? (y/n): ') == 'y':
+                    outgoing_call_thread = threading.Thread(target=call, kwargs={'username': username})
+                    outgoing_call_thread.start()
+                else:
+                    conn.close()
+                    continue
+            for _ in range(10):
+                print(read_sock(conn))
+            conn.close()
+    except KeyboardInterrupt:
+        if conn is not None:
+            conn.close()
+        recv_sock.close()
+        raise KeyboardInterrupt
+
+
+def call(username):
+    global expecting_call_back_from
+    ip = unr(username)
+    if ip is None:
+        return
+    expecting_call_back_from = username
+    try:
+        call_sock = socket.socket()
+        call_sock.connect((ip, incoming_call_port))
+        for _ in range(10):
+            call_sock.send(b'Hello\n')
+            sleep(.5)
+        call_sock.close()
+    except:
+        pass
+    expecting_call_back_from = None
+
 
 def main(username, password):
     msg_sock = socket.socket()
@@ -51,7 +112,26 @@ def main(username, password):
     else:
         print('Auth Failure')
     msg_sock.close()
-    listen_call()
+    # call_thread = threading.Thread(target=listen_call)
+    # call_thread.start()
+    # call_thread.join()
+    try:
+        while True:
+            x = input("# ")
+            y = x.split()
+            if y[0] == 'exit':
+                break
+            elif y[0] == 'call':
+                outgoing_call_thread = threading.Thread(target=call, kwargs={'username': y[1]})
+                outgoing_call_thread.start()
+            elif y[0] == 'ipr':
+                print(ipr(y[1]))
+            elif y[0] == 'unr':
+                print(unr(y[1]))
+    except KeyboardInterrupt:
+        pass
+    print()
+
 
 if __name__ == '__main__':
     if len(sys.argv) != 3:
