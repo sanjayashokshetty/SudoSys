@@ -17,13 +17,21 @@ def msg_routine():
     pass
 
 
+buffer = b''
+
+
 def read_sock(conn):
-    data = b''
+    global buffer
+    data = buffer
+    buffer = b''
     while run:
         block = conn.recv(10)
-        data += block
-        if block.find(b'\n') >= 0:
+        end = block.find(b'\n')
+        if end >= 0:
+            buffer += block[end + 1:]
+            data += block[:end + 1]
             break
+        data += block
     data = data.decode()
     return data.strip()
 
@@ -106,7 +114,7 @@ def call(username):
         call_sock.connect((ip, incoming_call_port))
         for _ in range(10):
             call_sock.send(b'Hello\n')
-            sleep(.5)
+            sleep(2)
         call_sock.close()
     except:
         pass
