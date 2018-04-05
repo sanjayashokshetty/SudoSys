@@ -26,6 +26,22 @@ def auth(sock, username, password):
     data = read_sock(sock)
     return data == 'pass'
 
+def unr(address):
+    sock = socket.socket()
+    sock.connect((server_ip, server_port))
+    sock.send(('unr:' + address[0]+'\n').encode('ascii'))
+    data = read_sock(sock)
+    usrname=data.split(':')[1]
+    return usrname
+
+
+def listen_call():
+    recv_sock=socket.socket()
+    recv_sock.bind(('', incoming_call_port))
+    recv_sock.listen(5)
+    conn, address = recv_sock.accept()
+    usrname=unr(address)
+    print(usrname+"is calling u")
 
 def main(username, password):
     msg_sock = socket.socket()
@@ -35,7 +51,7 @@ def main(username, password):
     else:
         print('Auth Failure')
     msg_sock.close()
-
+    listen_call()
 
 if __name__ == '__main__':
     if len(sys.argv) != 3:
