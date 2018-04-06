@@ -16,16 +16,10 @@ ans = None
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 44100
-CHUNK = 1024 * 8
+CHUNK = 128
 
 audio = pyaudio.PyAudio()
 
-mic = audio.open(format=FORMAT, channels=CHANNELS,
-                 rate=RATE, input=True,
-                 frames_per_buffer=CHUNK)
-speaker = audio.open(format=FORMAT, channels=CHANNELS,
-                     rate=RATE, output=True,
-                     frames_per_buffer=CHUNK)
 buffer = b''
 
 
@@ -104,11 +98,16 @@ def listen_call():
                     conn.send(b'n\n')
                     conn.close()
                     continue
+            speaker = audio.open(format=FORMAT, channels=CHANNELS,
+                                 rate=RATE, output=True,
+                                 frames_per_buffer=CHUNK)
+
             for _ in range(100000):
                 frame = conn.recv(CHUNK)
                 speaker.write(frame)
                 print('RECV')
-                # sleep(.1)
+                # sleep(.01)
+            speaker.close()
             conn.close()
     except KeyboardInterrupt:
         if conn is not None:
@@ -127,11 +126,17 @@ def call(username):
         call_sock = socket.socket()
         call_sock.connect((ip, incoming_call_port))
         resp = read_sock(call_sock)
+        print(resp)
+        mic = audio.open(format=FORMAT, channels=CHANNELS,
+                         rate=RATE, input=True,
+                         frames_per_buffer=CHUNK)
         if resp == 'y':
             for _ in range(100000):
                 call_sock.sendall(mic.read(CHUNK))
+                # sleep(.01)
                 print('SENT')
-                # sleep(.1)
+        print('meowwww')
+        mic.close()
         call_sock.close()
     except:
         pass
