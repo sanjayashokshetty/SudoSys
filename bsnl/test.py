@@ -6,7 +6,7 @@ import wave
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 16000
-CHUNK = 1000
+CHUNK = 16000
 RECORD_SECONDS = 10
 
 audio = pyaudio.PyAudio()

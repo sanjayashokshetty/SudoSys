@@ -124,7 +124,7 @@ def call(username):
         call_sock = socket.socket()
         call_sock.connect((ip, incoming_call_port))
         for _ in range(1000):
-            call_sock.send(mic.read(CHUNK) + b'\n')
+            call_sock.send(mic.read(CHUNK))
         call_sock.close()
     except:
         pass
