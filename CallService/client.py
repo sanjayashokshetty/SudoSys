@@ -12,7 +12,7 @@ expecting_call_back_from = None
 run = True
 recv_sock = None
 ans = None
-
+me_caller = False
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 44100
@@ -81,7 +81,6 @@ def listen_call():
             if not run:
                 break
             username = ipr(address[0])
-
             if expecting_call_back_from is not None and expecting_call_back_from != username:
                 conn.close()
                 continue
@@ -98,15 +97,16 @@ def listen_call():
                     conn.send(b'n\n')
                     conn.close()
                     continue
+            else:
+                conn.send(b'y\n')
             speaker = audio.open(format=FORMAT, channels=CHANNELS,
                                  rate=RATE, output=True,
                                  frames_per_buffer=CHUNK)
-
             for _ in range(100000):
+                print('RECV')
                 frame = conn.recv(CHUNK)
                 speaker.write(frame)
-                print('RECV')
-                # sleep(.01)
+                sleep(.001)
             speaker.close()
             conn.close()
     except KeyboardInterrupt:
@@ -117,7 +117,7 @@ def listen_call():
 
 
 def call(username):
-    global expecting_call_back_from
+    global expecting_call_back_from, me_caller
     ip = unr(username)
     if ip is None:
         return
@@ -133,18 +133,19 @@ def call(username):
         if resp == 'y':
             for _ in range(100000):
                 call_sock.sendall(mic.read(CHUNK))
-                # sleep(.01)
-                print('SENT')
+                sleep(.001)
+                # print('SENT')
         print('meowwww')
         mic.close()
         call_sock.close()
     except:
         pass
     expecting_call_back_from = None
+    me_caller = False
 
 
 def main(username, password):
-    global run, ans, outgoing_call_thread
+    global run, ans, outgoing_call_thread, me_caller
     msg_sock = socket.socket()
     msg_sock.connect((server_ip, server_port))
     if auth(msg_sock, username, password):
@@ -163,6 +164,7 @@ def main(username, password):
                 recv_sock.close()
                 break
             elif y[0] == 'call':
+                me_caller = True
                 outgoing_call_thread = threading.Thread(target=call, kwargs={'username': y[1]})
                 outgoing_call_thread.start()
             elif y[0] == 'ipr':
