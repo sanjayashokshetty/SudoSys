@@ -15,7 +15,7 @@ ans = None
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 44100
-CHUNK = 128
+CHUNK = 64
 in_call = False
 audio = None
 
@@ -103,6 +103,7 @@ def listen_call():
     recv_sock.bind(('', incoming_call_port))
     recv_sock.listen(1)
     while run:
+        me_caller = False
         conn, address = recv_sock.accept()
         if not run:
             break
@@ -124,6 +125,7 @@ def listen_call():
                 conn.close()
                 continue
         else:
+            me_caller = True
             conn.send(b'y\n')
         in_call = True
         speaker = audio.open(format=FORMAT, channels=CHANNELS,
@@ -139,6 +141,9 @@ def listen_call():
         speaker.close()
         conn.close()
         in_call = False
+        print('Call disconnected!')
+        # if not me_caller:
+        print('# ', end='')
     recv_sock.close()
 
 
