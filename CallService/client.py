@@ -110,7 +110,7 @@ def listen_call():
             conn.close()
             continue
         if expecting_call_back_from is None:
-            print('\n' + username + ' is calling you! Accept?(y/n): ', end='')
+            print(username + ' is calling you! Accept?(y/n): ', end='')
             ans = None
             while run and ans is None:
                 sleep(.1)
@@ -140,8 +140,8 @@ def listen_call():
         conn.close()
         in_call = False
         print('Call disconnected!')
-        # if not me_caller:+
-        print('# ', end='')
+        if not me_caller:
+            print('# ', end='')
     recv_sock.close()
 
 
@@ -156,7 +156,6 @@ def call(username):
         call_sock = socket.socket()
         call_sock.connect((ip, incoming_call_port))
         resp = read_sock(call_sock)
-        print(resp)
         mic = audio.open(format=FORMAT, channels=CHANNELS,
                          rate=RATE, input=True,
                          frames_per_buffer=CHUNK)
@@ -240,6 +239,8 @@ def main(username, password):
         try:
             while True:
                 x = input("# ")
+                if len(x) == 0:
+                    continue
                 y = x.split()
                 if y[0] == 'exit':
                     raise KeyboardInterrupt
@@ -255,15 +256,21 @@ def main(username, password):
                 elif y[0] == 'bc':
                     bc(x)
                 elif y[0] == 'inbox':
-                    print('Your inbox')
-                    for msg in inbox:
-                        print(msg)
-                    inbox.clear()
+                    if inbox:
+                        print('Your inbox')
+                        for msg in inbox:
+                            print(msg)
+                        inbox.clear()
+                    else:
+                        print('No new messages')
                 elif y[0] == 'shoutbox':
-                    print('Get ready!')
-                    for msg in broad:
-                        print(msg)
-                    broad.clear()
+                    if broad:
+                        print('Get ready!')
+                        for msg in broad:
+                            print(msg)
+                        broad.clear()
+                    else:
+                        print('No new messages')
                 elif y[0] == 'help':
                     print('HELP')
                 elif y[0] == 'y' or y[0] == 'n':
