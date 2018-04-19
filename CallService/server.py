@@ -1,11 +1,13 @@
 import socket
 import threading
+from _thread import start_new_thread
 
 username_password_db = {'srinag': 'password', 'shreyas': 'password', 'skitty': 'password'}
 username_resolver = {}
 ip_resolver = {}
 username_conn = {}
 call_service_port = 8001
+msg_service_port = 8002
 run = True
 call_processor_sock = None
 
@@ -76,19 +78,119 @@ def call_processor():
     call_processor_sock.close()
 
 
+list_of_clients = []
+
+
+def client_thread(conn, addr):
+    global run
+    username = conn.recv(2048).decode()
+    password = conn.recv(2048).decode()
+    print("Client entered:" + username, password)
+    if not auth(username, password):
+        msg = 'Invalid Authentication! Connect Again!\n'
+        print(msg)
+        conn.send(msg.encode())
+        conn.close()
+        return
+    else:
+        list_of_clients.append([username, conn])
+        print("Client has authenticated on address", addr[0])
+        msg = "Welcome to this chatroom!"
+        conn.send(msg.encode())
+    while run:
+        try:
+            message = conn.recv(2048).decode()
+            if message:
+                if message[:3] == 'pm ':
+                    print("Private mesg..")
+                    print("<" + username + "> " + message)
+                    user = message[3:].split()
+                    message_to_send = '<' + username + '>(Private) ' + ' '.join(user[1:]) + '\n'
+                    user = user[0]
+                    print(user, ":", message_to_send)
+                    if not pm(message_to_send, user):
+                        conn.send("Client not Found!\n".encode())
+                else:
+                    print("Public msg")
+                    print("<" + username + "> " + message)
+                    message_to_send = "<" + username + "> " + message
+                    broadcast(message_to_send, conn)
+
+            else:
+                remove(conn)
+
+        except:
+            continue
+
+
+client_threads = {}
+
+
+def msg_listener():
+    global run
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server.bind(('', msg_service_port))
+    server.listen(100)
+    while run:
+        conn, addr = server.accept()
+        if not run:
+            break
+        print(addr[0] + " connected")
+        start_new_thread(client_thread, (conn, addr))
+
+
+def remove(connection):
+    if connection in list_of_clients:
+        list_of_clients.remove(connection)
+
+
+def broadcast(message, connection):
+    for clients in list_of_clients:
+        if clients[1] != connection:
+            try:
+                clients[1].send(message.encode())
+            except:
+                clients[1].close()
+                remove(clients)
+            break
+
+
+def pm(msg, to):
+    names = [clients[0] for clients in list_of_clients]
+    if to in names:
+        tosock = list_of_clients[names.index(to)][1]
+        try:
+            tosock.send(msg.encode())
+            print("Sent!")
+        except:
+            tosock.close()
+            remove(tosock)
+    else:
+        return False
+
+
 def main():
     global run, call_processor_sock
     call_processor_thread = threading.Thread(target=call_processor)
     call_processor_thread.start()
+    msg_listener_thread = threading.Thread(target=msg_listener)
+    msg_listener_thread.start()
     try:
         call_processor_thread.join()
+        msg_listener_thread.join()
     except KeyboardInterrupt:
-        print('Stopping')
+        print('Stopping...')
         run = False
         term_sock = socket.socket()
         term_sock.connect(('', call_service_port))
         term_sock.close()
         call_processor_thread.join()
+        term_sock = socket.socket()
+        term_sock.connect(('', msg_service_port))
+        term_sock.close()
+        msg_listener_thread.join()
+        print('Stopped')
 
 
 if __name__ == '__main__':
