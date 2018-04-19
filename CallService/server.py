@@ -101,20 +101,15 @@ def client_thread(conn, addr):
         try:
             message = conn.recv(2048).decode()
             if message:
+                print(message)
                 if message[:3] == 'pm ':
-                    print("Private mesg..")
-                    print("<" + username + "> " + message)
                     user = message[3:].split()
-                    message_to_send = '<' + username + '>(Private) ' + ' '.join(user[1:]) + '\n'
+                    message_to_send = 'pm ' + username + ' ' + ' '.join(user[1:]) + '\n'
                     user = user[0]
-                    print(user, ":", message_to_send)
                     if not pm(message_to_send, user):
                         conn.send("Client not Found!\n".encode())
                 else:
-                    print("Public msg")
-                    print("<" + username + "> " + message)
-                    message_to_send = "<" + username + "> " + message
-                    broadcast(message_to_send, conn)
+                    broadcast('bc ' + username + ' ' + message, conn)
 
             else:
                 remove(conn)
