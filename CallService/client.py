@@ -214,8 +214,11 @@ def msg_service(username, password):
                     x = msg.split()
                     if x[0] == 'pm':
                         inbox.append(x[1] + ' : ' + ' '.join(x[2:]))
-                    if x[0] == 'bc':
+                    elif x[0] == 'bc':
                         broad.append(x[1] + ' : ' + ' '.join(x[2:]))
+                    else:
+                        print('Could not send message!\n# ')
+
     msg_server.close()
 
 
