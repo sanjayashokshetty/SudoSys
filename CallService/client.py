@@ -110,7 +110,7 @@ def listen_call():
             conn.close()
             continue
         if expecting_call_back_from is None:
-            print('\n' + username + ' is calling you! Accept?(y/n): ')
+            print('\n' + username + ' is calling you! Accept?(y/n): ', end='')
             ans = None
             while run and ans is None:
                 sleep(.1)
@@ -189,6 +189,10 @@ def bc(req):
         msg_server.send(req.encode())
 
 
+inbox = []
+broad = []
+
+
 def msg_service(username, password):
     global run, msg_server
     msg_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -208,8 +212,11 @@ def msg_service(username, password):
             for socks in read_sockets:
                 if socks == msg_server:
                     msg = socks.recv(2048).decode()
-                    print(msg)
-
+                    x = msg.split()
+                    if x[0] == 'pm':
+                        inbox.append(x[1] + ' : ' + ' '.join(x[2:]))
+                    if x[0] == 'bc':
+                        broad.append(x[1] + ' : ' + ' '.join(x[2:]))
     msg_server.close()
 
 
@@ -249,8 +256,14 @@ def main(username, password):
                     bc(x)
                 elif y[0] == 'inbox':
                     print('Your inbox')
+                    for msg in inbox:
+                        print(msg)
+                    inbox.clear()
                 elif y[0] == 'shoutbox':
                     print('Get ready!')
+                    for msg in broad:
+                        print(msg)
+                    broad.clear()
                 elif y[0] == 'help':
                     print('HELP')
                 elif y[0] == 'y' or y[0] == 'n':

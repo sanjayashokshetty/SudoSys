@@ -109,7 +109,7 @@ def client_thread(conn, addr):
                     if not pm(message_to_send, user):
                         conn.send("Client not Found!\n".encode())
                 else:
-                    broadcast('bc ' + username + ' ' + message, conn)
+                    broadcast('bc ' + username + ' ' + ' '.join(message.split()[1:]), conn)
 
             else:
                 remove(conn)
@@ -158,6 +158,7 @@ def pm(msg, to):
         try:
             tosock.send(msg.encode())
             print("Sent!")
+            return True
         except:
             tosock.close()
             remove(tosock)
