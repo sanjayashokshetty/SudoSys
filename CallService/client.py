@@ -8,7 +8,7 @@ import pyaudio
 incoming_call_port = 8000
 call_service_port = 8001
 msg_service_port = 8002
-server_ip = '10.50.16.223'
+server_ip = '192.168.43.15'
 incoming_call_thread, outgoing_call_thread = None, None
 expecting_call_back_from = None
 run = True
@@ -16,8 +16,8 @@ recv_sock = None
 ans = None
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
-RATE = 44100
-CHUNK = 64
+CHUNK = 1024
+RATE = CHUNK * 8
 in_call = False
 audio = None
 
