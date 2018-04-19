@@ -17,7 +17,7 @@ ans = None
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 44100
-CHUNK = 64
+CHUNK = 1024
 in_call = False
 audio = None
 
@@ -98,6 +98,7 @@ def ipr(ip):
 def listen_call():
     global expecting_call_back_from, outgoing_call_thread, run, recv_sock, ans, in_call
     recv_sock = socket.socket()
+    recv_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     recv_sock.bind(('', incoming_call_port))
     recv_sock.listen(1)
     while run:
@@ -111,6 +112,7 @@ def listen_call():
             continue
         if expecting_call_back_from is None:
             print(username + ' is calling you! Accept?(y/n): ', end='')
+            sys.stdout.flush()
             ans = None
             while run and ans is None:
                 sleep(.1)
@@ -132,7 +134,7 @@ def listen_call():
         try:
             while run and in_call:
                 frame = conn.recv(CHUNK)
-                speaker.write(frame)
+                speaker.write(frame, CHUNK)
                 sleep(.001)
         except:
             pass
@@ -140,7 +142,7 @@ def listen_call():
         conn.close()
         in_call = False
         print('Call disconnected!')
-        if not me_caller:
+        if me_caller:
             print('# ', end='')
     recv_sock.close()
 
@@ -217,7 +219,7 @@ def msg_service(username, password):
                     elif x[0] == 'bc':
                         broad.append(x[1] + ' : ' + ' '.join(x[2:]))
                     else:
-                        print('Could not send message!\n# ')
+                        print('Could not send message!\n# ', end='')
 
     msg_server.close()
 
