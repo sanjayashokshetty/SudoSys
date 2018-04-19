@@ -193,7 +193,9 @@ def msg_service(username, password):
     global run, msg_server
     msg_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     msg_server.connect((server_ip, msg_service_port))
+    username += '\n'
     msg_server.send(username.encode())
+    password += '\n'
     msg_server.send(password.encode())
     message = msg_server.recv(2048).decode()
     if message == "Invalid Authentication! Connect Again!":

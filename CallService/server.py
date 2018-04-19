@@ -83,8 +83,8 @@ list_of_clients = []
 
 def client_thread(conn, addr):
     global run
-    username = conn.recv(2048).decode()
-    password = conn.recv(2048).decode()
+    username = read_sock(conn)
+    password = read_sock(conn)
     print("Client entered:" + username, password)
     if not auth(username, password):
         msg = 'Invalid Authentication! Connect Again!\n'
