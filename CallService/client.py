@@ -17,7 +17,7 @@ ans = None
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 44100
-CHUNK = 512
+CHUNK = 64
 in_call = False
 audio = None
 
@@ -129,17 +129,16 @@ def listen_call():
             conn.send(b'y\n')
         in_call = True
 
+        speaker = audio.open(format=FORMAT, channels=CHANNELS,
+                             rate=RATE, output=True,
+                             frames_per_buffer=CHUNK)
         try:
             while run and in_call:
                 frame = conn.recv(CHUNK)
-                speaker = audio.open(format=FORMAT, channels=CHANNELS,
-                                     rate=RATE, output=True,
-                                     frames_per_buffer=CHUNK)
                 speaker.write(frame, CHUNK)
-                sleep(.1)
-                speaker.close()
         except:
             pass
+        speaker.close()
         conn.close()
         in_call = False
         print('Call disconnected!')
@@ -160,17 +159,16 @@ def call(username):
         call_sock.connect((ip, incoming_call_port))
         resp = read_sock(call_sock)
 
+        mic = audio.open(format=FORMAT, channels=CHANNELS,
+                         rate=RATE, input=True,
+                         frames_per_buffer=CHUNK)
         if resp == 'y':
             try:
                 while run and in_call:
-                    mic = audio.open(format=FORMAT, channels=CHANNELS,
-                                     rate=RATE, input=True,
-                                     frames_per_buffer=CHUNK)
-                    sleep(.1)
                     call_sock.sendall(mic.read(CHUNK))
-                    mic.close()
             except:
                 pass
+        mic.close()
         call_sock.close()
     except ConnectionRefusedError:
         print('User unavailable!')
