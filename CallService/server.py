@@ -2,7 +2,8 @@ import socket
 import threading
 from _thread import start_new_thread
 
-username_password_db = {'srinag': 'password', 'shreyas': 'password', 'skitty': 'password'}
+username_password_db = {'srinag': 'password', 'shreyas': 'password', 'skitty': 'password', 'yash': '149',
+                        'sanjay': '136'}
 username_resolver = {}
 ip_resolver = {}
 username_conn = {}
